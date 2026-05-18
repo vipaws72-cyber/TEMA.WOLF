@@ -587,7 +587,7 @@ async def punish(interaction: discord.Interaction, member: discord.Member):
 # =========================
 bot.run(TOKEN)
 ```python
-
+'''
 # المكتبات المطلوبة
 '''
 ```bash
