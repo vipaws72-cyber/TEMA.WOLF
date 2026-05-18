@@ -599,3 +599,4 @@ pip install -U discord.py aiohttp
 ```json
 {}
 ```
+bot.run(TOKEN)
