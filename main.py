@@ -1,4 +1,3 @@
-# بوت ديسكورد مدمج كامل
 
 ```python
 import discord
