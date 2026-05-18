@@ -1,3 +1,6 @@
+# main.py (نسخة مصححة ومنظمة)
+
+```python
 import discord
 from discord.ext import commands, tasks
 from discord import app_commands
@@ -75,7 +78,6 @@ points = {}
 leave_timers = {}
 sent_games = set()
 
-# عداد الألعاب
 current_day = date.today()
 daily_count = 0
 
@@ -83,15 +85,18 @@ daily_count = 0
 # تحميل النقاط
 # =========================
 if os.path.exists("points.json"):
-    with open("points.json", "r") as f:
-        points = json.load(f)
+    try:
+        with open("points.json", "r", encoding="utf-8") as f:
+            points = json.load(f)
+    except Exception:
+        points = {}
 
 # =========================
 # حفظ النقاط
 # =========================
 def save_points():
-    with open("points.json", "w") as f:
-        json.dump(points, f)
+    with open("points.json", "w", encoding="utf-8") as f:
+        json.dump(points, f, ensure_ascii=False, indent=4)
 
 # =========================
 # تنسيق الوقت
@@ -120,8 +125,11 @@ def is_protected(member):
 async def remove_role_later(member, role, delay):
     await asyncio.sleep(delay)
 
-    if role in member.roles:
-        await member.remove_roles(role)
+    try:
+        if role in member.roles:
+            await member.remove_roles(role)
+    except Exception:
+        pass
 
 # =========================
 # لوق
@@ -130,7 +138,10 @@ async def send_log(guild, msg):
     ch = guild.get_channel(LOG_CHANNEL_ID)
 
     if ch:
-        await ch.send(msg)
+        try:
+            await ch.send(msg)
+        except Exception:
+            pass
 
 # =========================
 # READY
@@ -149,7 +160,7 @@ async def on_ready():
         fetch_games.start()
 
 # =========================
-# نظام تغيير الأسماء
+# تغيير الأسماء
 # =========================
 @bot.event
 async def on_member_join(member):
@@ -168,7 +179,7 @@ async def on_member_join(member):
 
         await member.edit(nick=new_name)
 
-    except:
+    except Exception:
         pass
 
 # =========================
@@ -247,7 +258,7 @@ async def reset_all(interaction: discord.Interaction):
     await interaction.response.send_message("🧹 تم تصفير الجميع")
 
 # =========================
-# منع روابط ديسكورد
+# منع روابط الديسكورد
 # =========================
 DISCORD_INVITE_PATTERNS = [
     "discord.gg/",
@@ -256,7 +267,7 @@ DISCORD_INVITE_PATTERNS = [
 ]
 
 # =========================
-# الحضور الصوتي
+# الرسائل
 # =========================
 @bot.event
 async def on_message(message):
@@ -264,14 +275,13 @@ async def on_message(message):
         if message.author.bot:
             return
 
-        # منع روابط سيرفرات الديسكورد
         if any(link in message.content.lower() for link in DISCORD_INVITE_PATTERNS):
 
             if not is_admin(message.author):
 
                 try:
                     await message.delete()
-                except:
+                except Exception:
                     pass
 
                 try:
@@ -279,15 +289,15 @@ async def on_message(message):
                         discord.utils.utcnow() + timedelta(hours=2),
                         reason="نشر رابط سيرفر ديسكورد"
                     )
-                except:
+                except Exception:
                     pass
 
                 try:
                     await message.channel.send(
-                        f"⛔ {message.author.mention} تم حذف رابط الديسكورد وإعطاؤك تايم أوت ساعتين",
+                        f"⛔ {message.author.mention} تم حذف الرابط وإعطاؤك تايم أوت ساعتين",
                         delete_after=10
                     )
-                except:
+                except Exception:
                     pass
 
                 return
@@ -295,14 +305,15 @@ async def on_message(message):
         if message.channel.id == LOGIN_CHANNEL:
 
             member = message.author
+            content = message.content.strip()
 
-            if message.content.strip() == "تسجيل دخول":
+            if content == "تسجيل دخول":
 
                 if not member.voice or not member.voice.channel:
                     return await message.reply("❌ لازم تكون داخل روم صوتي")
 
                 if member.id in sessions:
-                    return await message.reply("⚠️ انت مسجل بالفعل")
+                    return await message.reply("⚠️ أنت مسجل بالفعل")
 
                 sessions[member.id] = time.time()
 
@@ -312,13 +323,13 @@ async def on_message(message):
                     await member.send(
                         "🟢 تم تسجيل دخولك\n🎧 يتم احتساب الوقت الآن\n⭐ 30 نقطة لكل ساعة"
                     )
-                except:
+                except Exception:
                     pass
 
-            elif message.content.strip() == "تسجيل خروج":
+            elif content == "تسجيل خروج":
 
                 if member.id not in sessions:
-                    return await message.reply("❌ انت غير مسجل")
+                    return await message.reply("❌ أنت غير مسجل")
 
                 start = sessions[member.id]
                 duration = int(time.time() - start)
@@ -331,19 +342,19 @@ async def on_message(message):
                 save_points()
 
                 await message.reply(
-                    f"✨ تم تسجيل خروجك بنجاح ✨
+                    f"""✨ تم تسجيل خروجك بنجاح ✨
 
 ⏳ الوقت الذي قضيته: {format_time(duration)}
 ⭐ النقاط المكتسبة: {earned}
 🏆 مجموع نقاطك: {points[str(member.id)]}
 
 🎧 شكراً لنشاطك داخل السيرفر
-💙 ننتظرك ترجع قريب"
+💙 ننتظرك ترجع قريب"""
                 )
 
         await bot.process_commands(message)
 
-    except:
+    except Exception:
         print(traceback.format_exc())
 
 # =========================
@@ -358,7 +369,6 @@ async def on_voice_state_update(member, before, after):
         if member.id not in sessions:
             return
 
-        # خروج
         if before.channel and not after.channel:
 
             if member.id in leave_timers:
@@ -385,17 +395,16 @@ async def on_voice_state_update(member, before, after):
                         await member.send(
                             f"⏰ انتهت المهلة\n⏳ الوقت: {format_time(duration)}\n⭐ النقاط: {earned}"
                         )
-                    except:
+                    except Exception:
                         pass
 
             leave_timers[member.id] = asyncio.create_task(leave_timer())
 
             try:
                 await member.send("🚪 خرجت من الصوتي، لديك 5 دقائق للعودة")
-            except:
+            except Exception:
                 pass
 
-        # رجوع
         if after.channel:
 
             if member.id in leave_timers:
@@ -404,14 +413,14 @@ async def on_voice_state_update(member, before, after):
 
                 try:
                     await member.send("✅ تم إلغاء المهلة واستمرار تسجيلك")
-                except:
+                except Exception:
                     pass
 
-    except:
+    except Exception:
         print(traceback.format_exc())
 
 # =========================
-# نظام الألعاب المجانية
+# الألعاب المجانية
 # =========================
 @tasks.loop(minutes=5)
 async def fetch_games():
@@ -452,10 +461,7 @@ async def fetch_games():
                     if not game_id or not title or not url:
                         continue
 
-                    if not (
-                        "Epic" in platforms or
-                        "Steam" in platforms
-                    ):
+                    if "Epic" not in platforms and "Steam" not in platforms:
                         continue
 
                     if game_id in sent_games:
@@ -486,26 +492,11 @@ class PunishSelect(discord.ui.Select):
         self.member = member
 
         options = [
-            discord.SelectOption(
-                label="قذف",
-                description="انذار + تايم اوت"
-            ),
-            discord.SelectOption(
-                label="سب",
-                description="تحذير"
-            ),
-            discord.SelectOption(
-                label="تسحيب",
-                description="باند نهائي"
-            ),
-            discord.SelectOption(
-                label="تسحيب متكرر",
-                description="ديسك"
-            ),
-            discord.SelectOption(
-                label="استعمال ادارة",
-                description="إزالة رتبة الإدارة"
-            ),
+            discord.SelectOption(label="قذف", description="انذار + تايم اوت"),
+            discord.SelectOption(label="سب", description="تحذير"),
+            discord.SelectOption(label="تسحيب", description="باند نهائي"),
+            discord.SelectOption(label="تسحيب متكرر", description="ديسك"),
+            discord.SelectOption(label="استعمال ادارة", description="إزالة رتبة الإدارة"),
         ]
 
         super().__init__(
@@ -524,70 +515,61 @@ class PunishSelect(discord.ui.Select):
                 ephemeral=True
             )
 
-        if self.values[0] == "قذف":
+        try:
+            if self.values[0] == "قذف":
 
-            r1 = guild.get_role(roles["disc1"])
-            r2 = guild.get_role(roles["disc2"])
-            t = guild.get_role(roles["timeout"])
+                r1 = guild.get_role(roles["disc1"])
+                r2 = guild.get_role(roles["disc2"])
+                t = guild.get_role(roles["timeout"])
 
-            await member.add_roles(r1, r2, t)
+                await member.add_roles(r1, r2, t)
 
-            await member.timeout(
-                discord.utils.utcnow() + timedelta(days=7)
+                await member.timeout(
+                    discord.utils.utcnow() + timedelta(days=7)
+                )
+
+                bot.loop.create_task(remove_role_later(member, r1, durations["disc1"]))
+                bot.loop.create_task(remove_role_later(member, r2, durations["disc2"]))
+                bot.loop.create_task(remove_role_later(member, t, 7 * 24 * 60 * 60))
+
+            elif self.values[0] == "سب":
+
+                r1 = guild.get_role(roles["warn1"])
+                r2 = guild.get_role(roles["warn2"])
+
+                await member.add_roles(r1, r2)
+
+                bot.loop.create_task(remove_role_later(member, r1, durations["warn1"]))
+                bot.loop.create_task(remove_role_later(member, r2, durations["warn2"]))
+
+            elif self.values[0] == "تسحيب":
+                await member.ban(reason="تسحيب")
+
+            elif self.values[0] == "تسحيب متكرر":
+
+                r1 = guild.get_role(roles["disc1"])
+                r2 = guild.get_role(roles["disc2"])
+
+                await member.add_roles(r1, r2)
+
+            elif self.values[0] == "استعمال ادارة":
+
+                for role in member.roles:
+                    if role.permissions.administrator:
+                        await member.remove_roles(role)
+
+            await interaction.response.send_message(
+                "✅ تم تنفيذ العقوبة",
+                ephemeral=True
             )
 
-            bot.loop.create_task(
-                remove_role_later(member, r1, durations["disc1"])
+            await send_log(
+                guild,
+                f"📢 تم معاقبة {member.mention} بواسطة {interaction.user.mention}"
             )
 
-            bot.loop.create_task(
-                remove_role_later(member, r2, durations["disc2"])
-            )
-
-            bot.loop.create_task(
-                remove_role_later(member, t, 7 * 24 * 60 * 60)
-            )
-
-        elif self.values[0] == "سب":
-
-            r1 = guild.get_role(roles["warn1"])
-            r2 = guild.get_role(roles["warn2"])
-
-            await member.add_roles(r1, r2)
-
-            bot.loop.create_task(
-                remove_role_later(member, r1, durations["warn1"])
-            )
-
-            bot.loop.create_task(
-                remove_role_later(member, r2, durations["warn2"])
-            )
-
-        elif self.values[0] == "تسحيب":
-            await member.ban(reason="تسحيب")
-
-        elif self.values[0] == "تسحيب متكرر":
-
-            r1 = guild.get_role(roles["disc1"])
-            r2 = guild.get_role(roles["disc2"])
-
-            await member.add_roles(r1, r2)
-
-        elif self.values[0] == "استعمال ادارة":
-
-            for role in member.roles:
-                if role.permissions.administrator:
-                    await member.remove_roles(role)
-
-        await interaction.response.send_message(
-            "✅ تم تنفيذ العقوبة",
-            ephemeral=True
-        )
-
-        await send_log(
-            guild,
-            f"📢 تم معاقبة {member.mention} بواسطة {interaction.user.mention}"
-        )
+        except Exception:
+            print(traceback.format_exc())
 
 class PunishView(discord.ui.View):
     def __init__(self, member):
@@ -604,7 +586,7 @@ async def punish(interaction: discord.Interaction, member: discord.Member):
     )
 
 # =========================
-# RUN
+# تشغيل البوت
 # =========================
 bot.run(TOKEN)
 ```
@@ -612,16 +594,11 @@ bot.run(TOKEN)
 # المكتبات المطلوبة
 
 ```bash
-pip install discord.py aiohttp
+pip install -U discord.py aiohttp
 ```
 
-# ملفات مطلوبة
-
-- points.json
-
-إذا الملف غير موجود أنشئ ملف فارغ واكتب داخله:
+# ملف points.json
 
 ```json
 {}
 ```
-
