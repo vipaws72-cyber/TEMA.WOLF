@@ -586,17 +586,3 @@ async def punish(interaction: discord.Interaction, member: discord.Member):
 # تشغيل البوت
 # =========================
 bot.run(TOKEN)
-```python
-'''
-# المكتبات المطلوبة
-'''
-```bash
-pip install -U discord.py aiohttp
-```
-
-# ملف points.json
-
-```json
-{}
-```
-bot.run(TOKEN)
