@@ -1,5 +1,3 @@
-# main.py (نسخة مصححة ومنظمة)
-
 ```python
 import discord
 from discord.ext import commands, tasks
