@@ -1,14 +1,3 @@
-import discord
-from discord.ext import commands, tasks
-from discord import app_commands
-import os
-import time
-import json
-import asyncio
-import tracebackW
-import aiohttp
-from datetime import date, timedelta
-
 TOKEN = os.getenv("TOKEN")
 
 if not TOKEN:
