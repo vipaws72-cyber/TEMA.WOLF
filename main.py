@@ -1,5 +1,3 @@
-TOKEN = os.getenv("TOKEN")
-
 if not TOKEN:
     raise ValueError("TOKEN غير موجود")
 
